@@ -28,6 +28,31 @@ function toggleBank(){document.getElementById("bank").style.display=document.get
 document.getElementById("bankName").textContent=BANK.name;document.getElementById("bankOwner").textContent=BANK.owner;document.getElementById("bankAccount").textContent=BANK.account;
 async function checkout(){if(!cart.length)return message("Giỏ hàng đang trống.","err");let customer=document.getElementById("customer").value.trim(),phone=document.getElementById("phone").value.trim(),address=document.getElementById("address").value.trim(),payment=document.getElementById("payment").value;if(!customer||!phone||!address)return message("Vui lòng nhập đủ họ tên, số điện thoại và địa chỉ.","err");if(!/^[0-9+().\\s-]{9,16}$/.test(phone))return message("Số điện thoại chưa đúng định dạng.","err");if(payment==="bank_transfer")return message("Chưa thể nhận chuyển khoản: chủ shop cần cấu hình và xác minh thông tin ngân hàng trong mã nguồn trước khi bật phương thức này.","err");
 let total=cart.reduce((s,p)=>s+p.price*p.quantity,0),items=cart.map(p=>({product_id:p.id,name:p.name,unit_price:p.price,quantity:p.quantity,line_total:p.price*p.quantity})),btn=document.getElementById("submit");btn.disabled=true;btn.textContent="ĐANG GỬI ĐƠN...";
-try{let {data,error}=await supabaseClient.from("orders").insert({customer_name:customer,phone,address,payment_method:payment,payment_status:"unpaid",order_status:"new",items,total_amount:total}).select("id").single();if(error)throw error;message("ĐẶT HÀNG THÀNH CÔNG!\\nMã đơn: "+data.id+"\\nTổng tiền: "+money(total)+"\\nShop sẽ liên hệ xác nhận.","ok");cart=[];renderCart();["customer","phone","address"].forEach(id=>document.getElementById(id).value="")}catch(e){console.error(e);message("Gửi đơn chưa thành công. Kiểm tra đã chạy supabase_setup.sql và cấu hình RLS chưa.\\n"+(e.message||"Lỗi kết nối"),"err")}finally{btn.disabled=false;btn.textContent="ĐẶT HÀNG NGAY"}}
+try{
+  let {error}=await supabaseClient
+  .from("orders")
+  .insert({
+    customer_name:customer,
+    phone,
+    address,
+    payment_method:payment,
+    payment_status:"unpaid",
+    order_status:"new",
+    items,
+    total_amount:total
+  });
+
+if(error) throw error;
+
+message(
+  "ĐẶT HÀNG THÀNH CÔNG!\nShop sẽ liên hệ xác nhận.",
+  "ok"
+);
+cart=[];
+renderCart();
+["customer","phone","address"].forEach(
+  id=>document.getElementById(id).value=""
+);
+  if(error)throw error;message("ĐẶT HÀNG THÀNH CÔNG!\\nMã đơn: "+data.id+"\\nTổng tiền: "+money(total)+"\\nShop sẽ liên hệ xác nhận.","ok");cart=[];renderCart();["customer","phone","address"].forEach(id=>document.getElementById(id).value="")}catch(e){console.error(e);message("Gửi đơn chưa thành công. Kiểm tra đã chạy supabase_setup.sql và cấu hình RLS chưa.\\n"+(e.message||"Lỗi kết nối"),"err")}finally{btn.disabled=false;btn.textContent="ĐẶT HÀNG NGAY"}}
 renderProducts();renderCart();
 </script></body></html>
